@@ -29,6 +29,13 @@ Tuning note: speculative decoding pays off up to ~8 concurrent streams and fades
 that (verification competes with batch compute). Serving many users? Launch with
 `--max-model-len 131072 --max-num-seqs 16 --mtp 0` for max aggregate throughput.
 
+**TPU v5e-8 unavailable?** Kaggle provisions TPU sessions without hardware (or not at
+all) for unverified accounts and during fleet pressure — the API pushes silently fall
+back to CPU-only containers that crash at mesh init with
+`Insufficient devices for 2D mesh: found 1, expected 8`. Phone-verify the account,
+then retry. A slower but reliable P100 (GGUF/llama.cpp) fallback lives in
+[`p100/`](p100/README.md).
+
 ## Why this works (the one-paragraph version)
 
 Qwen3.8-27B is a hybrid: 48 of its 64 layers are **gated-DeltaNet linear attention**, only
