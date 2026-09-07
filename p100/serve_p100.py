@@ -75,11 +75,15 @@ MODEL_FILE=Huihui-Qwen3.8-27B-abliterated-UD-IQ4_XS.gguf
 CFG
 pkill -x llama-server 2>/dev/null; sleep 2
 BIN=/kaggle/tmp/llama.cpp/build/bin/llama-server
-for FLAGS in "-fa on --cache-type-k q8_0 --cache-type-v q8_0" "-fa off"; do
-  for NGL in 99 80 60; do
+# 64k context with q4_0 KV (16 full-attn layers -> ~1 GB KV at 64k). The ngl/FA
+# ladder backs off if VRAM allocation fails at load time.
+for FLAGS in "-c 65536 -fa on --cache-type-k q4_0 --cache-type-v q4_0" \
+             "-c 65536 -fa on --cache-type-k q8_0 --cache-type-v q8_0" \
+             "-c 65536 -fa off"; do
+  for NGL in 99 90 80 60; do
     echo "trying: $FLAGS -ngl $NGL"
     nohup $BIN -m "/kaggle/tmp/models/$MODEL_FILE" -a "$ALIAS" \
-      --host 127.0.0.1 --port 8080 -ngl $NGL -c 8192 $FLAGS \
+      --host 127.0.0.1 --port 8080 -ngl $NGL $FLAGS \
       --cache-reuse 256 --jinja --no-webui --threads 4 \
       > /kaggle/tmp/logs/server.log 2>&1 &
     PID=$!

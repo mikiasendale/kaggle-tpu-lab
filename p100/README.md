@@ -24,8 +24,8 @@ unavailable (see the TPU path in the repo root; it's ~6x faster when it works).
 | | P100 (this folder) | TPU v5e-8 (repo root) |
 |---|---|---|
 | Model format | GGUF UD-IQ4_XS (14.4 GB, 4-bit) | bf16 safetensors (55.6 GB) |
-| Decode speed | ~20-40 tok/s | ~130 tok/s (MTP) |
-| Context | 8192 tokens (fits VRAM budget) | 262144 native |
+| Decode speed | ~12-17 tok/s | ~130 tok/s (MTP) |
+| Context | 65536 (q4_0 KV cache, near-full GPU offload) | 262144 native |
 | Time to READY | ~6-8 min (cold llama.cpp build ~5, download ~2) | ~22 min |
 
 ## Session behavior
