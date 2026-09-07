@@ -40,6 +40,41 @@ puts it all together on Kaggle's free tier: a pre-built Python runtime with pinn
 versions, pre-mirrored weights, a pre-built XLA compile cache, MTP speculative decoding,
 and a tunnel to the outside world.
 
+## What the abliterated weights do
+
+Abliteration ([Arditi et al. 2024](https://arxiv.org/abs/2411.10109)) locates a single
+direction in the model's hidden states responsible for refusal — the vector that fires
+when the model decides to lecture or say "I can't help with that" — and zeros it out.
+Everything else is untouched: the same weights, same architecture, same training data
+and knowledge.
+
+**What changes.** The model answers prompts that the base Qwen3.8-27B refuses. This is
+most noticeable for:
+- Creative writing and roleplay involving morally ambiguous, violent, or sexual themes
+- Writing system prompts and guardrail specifications for AI safety research
+- Medical, legal, and harm-reduction questions that a censored model dodges
+- Security research prompts — exploit analysis, red-team scenarios, jailbreak detection
+- Exploring edge cases and adversarial inputs without the model redirecting to a lecture
+
+**What doesn't change.** All base capabilities carry over unchanged:
+- Coding, math, reasoning, and instruction following — identical to the base model
+- Vision (image understanding) — the tower is untouched
+- Tool calling — all registered tools work as before
+- 262k native context window — no truncation
+- Reasoning effort levels (`/think`, `/no_think`) — all preserved
+- MTP speculative decoding — compatible with the patched serving stack
+
+**Honest caveats.**
+- Abliteration doesn't add knowledge or capability — it only removes the refusal gate.
+  The model can still hallucinate on topics it wasn't well trained on, just like the
+  base model.
+- Without the refusal direction, sycophancy and confident confabulation may increase
+  slightly on open-ended or ambiguous queries.
+- It is not a guarantee of safe outputs. You are responsible for what you generate.
+- The base Qwen3.8-27B already handles most legitimate tasks without refusing;
+  abliteration mostly helps with prompts that land in the grey zone between safe and
+  flagged.
+
 ## Quick start A — as a Kaggle notebook
 
 **Copy & Edit** the published Kaggle notebook and Run it —
