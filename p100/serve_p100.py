@@ -5,7 +5,7 @@ TOPIC = "ktl-6418437426ec4b7baf23"
 KEY = "1e0afcc97b0ba77076ef35a63664d578"
 ALIAS = "Huihui-Qwen3.8-27B-abliterated"
 REPO = "huihui-ai/Huihui-Qwen3.8-27B-abliterated-GGUF"
-MODEL_FILE = "Huihui-Qwen3.8-27B-abliterated-UD-IQ4_XS.gguf"
+MODEL_FILE = "Huihui-Qwen3.8-27B-abliterated-UD-Q2_K_XL.gguf"
 
 def ntfy(msg):
     try:
@@ -55,7 +55,7 @@ if p.returncode != 0:
     sys.exit(1)
 say("build OK")
 
-say("step 3/5 download GGUF (~14.4 GB)")
+say("step 3/5 download GGUF (~10 GB)")
 try:
     from huggingface_hub import snapshot_download
     snapshot_download(repo_id=REPO, allow_patterns=[MODEL_FILE],
@@ -71,15 +71,15 @@ start = """
 source /dev/stdin <<'CFG'
 KEY=1e0afcc97b0ba77076ef35a63664d578
 ALIAS=Huihui-Qwen3.8-27B-abliterated
-MODEL_FILE=Huihui-Qwen3.8-27B-abliterated-UD-IQ4_XS.gguf
+MODEL_FILE=Huihui-Qwen3.8-27B-abliterated-UD-Q2_K_XL.gguf
 CFG
 pkill -x llama-server 2>/dev/null; sleep 2
 BIN=/kaggle/tmp/llama.cpp/build/bin/llama-server
-# 64k context with q4_0 KV (16 full-attn layers -> ~1 GB KV at 64k). The ngl/FA
+# 128k context with q4_0 KV (16 full-attn layers -> ~2 GB KV at 128k). The ngl/FA
 # ladder backs off if VRAM allocation fails at load time.
-for FLAGS in "-c 65536 -fa on --cache-type-k q4_0 --cache-type-v q4_0" \
-             "-c 65536 -fa on --cache-type-k q8_0 --cache-type-v q8_0" \
-             "-c 65536 -fa off"; do
+for FLAGS in "-c 128000 -fa on --cache-type-k q4_0 --cache-type-v q4_0" \
+             "-c 128000 -fa on --cache-type-k q8_0 --cache-type-v q8_0" \
+             "-c 128000 -fa off"; do
   for NGL in 99 90 80 60; do
     echo "trying: $FLAGS -ngl $NGL"
     nohup $BIN -m "/kaggle/tmp/models/$MODEL_FILE" -a "$ALIAS" \
