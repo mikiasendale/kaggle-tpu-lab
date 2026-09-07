@@ -1,11 +1,19 @@
 # kaggle-tpu-lab
 
-**Serve Qwen3.8-27B — a frontier-class 27B hybrid-attention model — on Kaggle's free
-TPU v5e-8, with a public OpenAI-compatible endpoint you can plug into Claude Code,
-Codex CLI, opencode, or anything else that speaks the OpenAI API.**
+**Serve Qwen3.8-27B-abliterated (huihui-ai) — a frontier-class 27B hybrid-attention
+model with its refusal direction removed — on Kaggle's free TPU v5e-8, with a public
+OpenAI-compatible endpoint you can plug into Claude Code, Codex CLI, opencode, or
+anything else that speaks the OpenAI API.**
 
 No paid GPU, no cloud account, no quantization. Full bf16 weights, up to the model's
 native **262,144-token context**, and real speed:
+
+> **Weights note.** This fork serves `huihui-ai/Huihui-Qwen3.8-27B-abliterated` (bf16
+> safetensors). Abliteration only edits weight values — the architecture, vision tower
+> and native MTP head are identical to `Qwen/Qwen3.8-27B` (verified from the config and
+> safetensors index), so speeds below carry over and the same compile cache applies.
+> GGUF builds such as `...-UD-IQ4_XS.gguf` cannot be served here: vllm-tpu loads
+> safetensors only, and at 8x16 GB HBM the bf16 model needs no quantization anyway.
 
 | What | Measured (TPU v5e-8, bf16, TP=8) |
 |---|---|
@@ -36,7 +44,9 @@ and a tunnel to the outside world.
 
 **Copy & Edit** the published Kaggle notebook and Run it —
 [**kaggle.com/code/rahim3/qwen3-8-27b-bf16-on-kaggle-tpu-130-tok-s-api**](https://www.kaggle.com/code/rahim3/qwen3-8-27b-bf16-on-kaggle-tpu-130-tok-s-api)
-— or upload [`notebook/qwen38-tpu-serve.ipynb`](notebook/qwen38-tpu-serve.ipynb) yourself.
+(that one serves the *base* weights) — or upload
+[`notebook/qwen38-tpu-serve.ipynb`](notebook/qwen38-tpu-serve.ipynb) yourself to serve the
+abliterated weights.
 Set **Accelerator = TPU VM v5e-8**, **Internet = ON**, attach the two datasets named in
 the first cell, and run top to bottom. The last cell *is* the server — the endpoint URL
 and API key appear in its output.
@@ -78,7 +88,7 @@ progress to your terminal so you always know what's happening:
   YOUR ENDPOINT IS LIVE
   base URL : https://xxxx-yyyy.trycloudflare.com/v1
   API key  : sk-....
-  model    : qwen3.8-27b   (context: 262144)
+  model    : qwen3.8-27b-abliterated   (context: 262144)
 ==================================================================
 ```
 
@@ -109,7 +119,7 @@ launcher/notebook print the endpoint URL and API key in a banner when the server
 ```bash
 export OPENAI_BASE_URL="https://<your-tunnel>.trycloudflare.com/v1"
 export OPENAI_API_KEY="sk-<your-key>"
-# model name: qwen3.8-27b
+# model name: qwen3.8-27b-abliterated
 ```
 
 **Claude Code** — the bundled vLLM also exposes an Anthropic-compatible `/v1/messages`
@@ -120,8 +130,8 @@ against it). One gotcha: the server authenticates with a Bearer header only, so 
 ```bash
 export ANTHROPIC_BASE_URL="https://<your-tunnel>.trycloudflare.com"
 export ANTHROPIC_AUTH_TOKEN="sk-<your-key>"
-export ANTHROPIC_MODEL="qwen3.8-27b"
-export ANTHROPIC_SMALL_FAST_MODEL="qwen3.8-27b"
+export ANTHROPIC_MODEL="qwen3.8-27b-abliterated"
+export ANTHROPIC_SMALL_FAST_MODEL="qwen3.8-27b-abliterated"
 claude
 ```
 
@@ -150,8 +160,13 @@ tools/embed_patch.py             re-embeds the patch into the kernel script afte
 
 Plus two public Kaggle datasets the kernel attaches:
 
-- **`rahim3/qwen3-8-27b-bf16`** — mirror of `Qwen/Qwen3.8-27B` (55.6 GB safetensors).
-  Attaching it skips the HF download entirely.
+- **`qinglvsuan/qwen38-27b-uncensored`** — public mirror of
+  `huihui-ai/Huihui-Qwen3.8-27B-abliterated` (bf16 safetensors). Attaching it skips the
+  HF download entirely. The kernel verifies the mount actually contains the complete
+  bf16 repo (all shards from `model.safetensors.index.json`) and otherwise downloads
+  the weights from Hugging Face automatically — add ~5-10 min. Prefer your own mirror?
+  Upload the repo's files as a Kaggle dataset and pass
+  `--weights-dataset owner/slug` to `launch.py serve`.
 - **`rahim3/qwen38-tpu-env-v5e8`** — the JAX/XLA compile cache for the documented
   configs (262k/4 and 131k/16 with images on, plus 262k/4 text-only; all MTP k=3), a
   `cloudflared` binary, and a `manifest.json` recording the build date and versions.
@@ -231,4 +246,5 @@ folder in the Kaggle UI (Output tab → New Dataset).
 ## License
 
 MIT for everything in this repo. Model weights follow the upstream
-[Qwen3.8-27B license](https://huggingface.co/Qwen/Qwen3.8-27B) (Apache-2.0).
+[Qwen3.8-27B license](https://huggingface.co/Qwen/Qwen3.8-27B) (Apache-2.0); the
+abliterated weights follow the same license (huihui-ai repo).
